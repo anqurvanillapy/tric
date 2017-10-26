@@ -1,4 +1,4 @@
-<h1 style="text-align: center;"><i>tric</i></h1>
+<div align="center"><h1><i>tric</i></h1></div>
 
 A SKI combinator calculus interpreter, *just for fun*.
 
