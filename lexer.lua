@@ -11,6 +11,7 @@ function _M.new(filename)
     nil_t         = "^nil",
     bool_t        = "^(false|true)",
     str_t         = '^"%g*"',
+    asgn_t        = "^=",
     id_t          = "^%a+w*",
   }
 
@@ -38,51 +39,54 @@ function _M:_matchtk(w, p)
   return false
 end
 
-function _M:_scan()
-  local ptn = self.patterns
-  local tokens = {}
-  local i = 1
+function _M:_scan(str)
+  local src
 
-  for line in string.gmatch(self.src, "[^\n]") do
+  if str == nil then
+    src = self.src
+  else
+    src = str
+  end
+
+  local ptn     = self.patterns
+  local tokens  = {}
+  local i       = 1
+
+  for line in string.gmatch(src, "[^\n]") do
     for word in string.gmatch(line, "%S+") do
-      local tk = nil
+      local tk = {}
 
       if tonumber(word) ~= nil then
-        self.offset = self.offset + string.len(word)
-        tk          = {
-          tktype    = "number",
-          val       = tonumber(word),
-        }
+        tk.tktype = "number"
+        tk.val    = tonumber(word)
       elseif self:_matchtk(word, ptn.nil_t) then
-        tk        = {
-          tktype  = "nil",
-          val     = nil,
-        }
+        tk.tktype = "nil"
+        tk.val    = nil
       elseif self:_matchtk(word, ptn.bool_t) then
-        tk        = {
-          tktype  = "boolean",
-          val     = utils.str2bool(word),
-        }
+        tk.tktype = "boolean"
+        tk.val    = utils.str2bool(word)
       elseif self:_matchtk(word, ptn.str_t) then
-        tk        = {
-          tktype  = "string",
-          val     = string.sub(word, 2, string.len(word) - 1)
-        }
+        tk.tktype = "string"
+        tk.val    = string.sub(word, 2, string.len(word) - 1)
+      elseif self:_matchtk(word, ptn.str_t) then
+        tk.tktype = "assign"
+        tk.val    = word
       elseif self:_matchtk(word, ptn.id_t) then
-        tk        = {
-          tktype  = "identifier",
-          val     = word,
-        }
+        tk.tktype = "identifier"
+        tk.val    = word
       end
 
-      tk.lit    = word
-      tk.loc    = self.loc
-      tk.offset = self.offset
+      self.offset = self.offset + string.len(word)
+      tk.lit      = word
+      tk.loc      = self.loc
+      tk.offset   = self.offset
 
-      if tk == nil then error(tk) end
-
-      tokens[i] = tk
-      i         = i + 1
+      if tk.tktype ~= nil then
+        tokens[i] = tk
+        i         = i + 1
+      else
+        error(tk)
+      end
     end
 
     self.loc    = self.loc + 1

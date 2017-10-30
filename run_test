@@ -1,0 +1,7 @@
+#!/usr/bin/env lua
+
+local test_lexer = require "tests.test_lexer"
+
+for name, tc in pairs(test_lexer) do
+    print(name, tc())
+end
